@@ -17,95 +17,71 @@ void SHT20_IIC_Init(void)
 
 u8 SHT20_SoftReset(void)
 {
-    u8 ret = 0;
-    SHT20_IIC_Start();
-    SHT20_IIC_Send_Byte((SHT2x_I2C_ADDR << 1) | 0);
-    ret = SHT20_IIC_Wait_Ack();
-    if (ret)
-    {
-        return 0; //error
-    }
-    SHT20_IIC_Send_Byte(SHT2x_SOFT_RESET);
-    ret = SHT20_IIC_Wait_Ack();
-    if (ret)
-    {
-        return 0; //error
-    }
-    SHT20_IIC_Stop();
-    return 1;
+	u8 ret = 0;
+	SHT20_IIC_Start();
+	SHT20_IIC_Send_Byte((SHT2x_I2C_ADDR << 1) | 0);
+	ret = SHT20_IIC_Wait_Ack();
+	if (ret)
+	{
+		return 0; //error
+	}
+	SHT20_IIC_Send_Byte(SHT2x_SOFT_RESET);
+	ret = SHT20_IIC_Wait_Ack();
+	if (ret)
+	{
+		return 0; //error
+	}
+	SHT20_IIC_Stop();
+	return 1;
 }
 
 u8 SHT20_ReadUserReg(void)
 {
-    u8 res = 0;
+	u8 res = 0;
 
-    SHT20_IIC_Start();
-    SHT20_IIC_Send_Byte((SHT2x_I2C_ADDR << 1) | 0);
-    SHT20_IIC_Wait_Ack();
-    SHT20_IIC_Send_Byte(SHT2x_READ_REG);
-    SHT20_IIC_Wait_Ack();
-    SHT20_IIC_Start();
-    SHT20_IIC_Send_Byte((SHT2x_I2C_ADDR << 1) | 1);
-    SHT20_IIC_Wait_Ack();
-    res = SHT20_IIC_Read_Byte(0);
-    SHT20_IIC_Stop();
+	SHT20_IIC_Start();
+	SHT20_IIC_Send_Byte((SHT2x_I2C_ADDR << 1) | 0);
+	SHT20_IIC_Wait_Ack();
+	SHT20_IIC_Send_Byte(SHT2x_READ_REG);
+	SHT20_IIC_Wait_Ack();
+	SHT20_IIC_Start();
+	SHT20_IIC_Send_Byte((SHT2x_I2C_ADDR << 1) | 1);
+	SHT20_IIC_Wait_Ack();
+	res = SHT20_IIC_Read_Byte(0);
+	SHT20_IIC_Stop();
 
-    return res;
+	return res;
 }
 
 u8 SHT20_SetResolution(SHT20_Resolution_t res)
 {
-    u8 ret = 0;
-    u8 val = 0;
-    val = SHT20_ReadUserReg();
-    val = (val & 0x7e) | res;
-    u8 temp[2] = { SHT2x_WRITE_REG, val };
+	u8 ret = 0;
+	u8 val = 0;
+	val = SHT20_ReadUserReg();
+	val = (val & 0x7e) | res;
+	//    u8 temp[2] = { SHT2x_WRITE_REG, val };
 
-    SHT20_IIC_Start();
-    SHT20_IIC_Send_Byte((SHT2x_I2C_ADDR << 1) | 0);
-    ret = SHT20_IIC_Wait_Ack();
-    if (ret)
-    {
-        return 0;
-    }
-    SHT20_IIC_Send_Byte(SHT2x_WRITE_REG);
-    ret = SHT20_IIC_Wait_Ack();
-    if (ret)
-    {
-        return 0;
-    }
-    SHT20_IIC_Send_Byte(val);
-    ret = SHT20_IIC_Wait_Ack();
-    if (ret)
-    {
-        return 0;
-    }
-    SHT20_IIC_Stop();
-    return 1;
-}
-
-u16 SHT20_GetRaw(u8 cmd)
-{
-    u8 val[3] = { 0 };
-
-    SHT20_IIC_Start();
-    SHT20_IIC_Send_Byte((SHT2x_I2C_ADDR << 1) | 0);
-    SHT20_IIC_Wait_Ack();
-    SHT20_IIC_Send_Byte(cmd);
-    SHT20_IIC_Wait_Ack();
-    SHT20_IIC_Stop();
-    
-    delay_ms(50);
-    
-    SHT20_IIC_Start();
-    SHT20_IIC_Send_Byte((SHT2x_I2C_ADDR << 1) | 1);
-    SHT20_IIC_Wait_Ack();
-    val[0] = SHT20_IIC_Read_Byte(1);
-    val[1] = SHT20_IIC_Read_Byte(1);
-    val[2] = SHT20_IIC_Read_Byte(1);
-    SHT20_IIC_Stop();
-
-    return (u16)(((u16)val[0] << 8) | val[1]);
+	SHT20_IIC_Start();
+	SHT20_IIC_Send_Byte((SHT2x_I2C_ADDR << 1) | 0);
+	ret = SHT20_IIC_Wait_Ack();
+	if (ret)
+	{
+		return 0;
+	}
+	SHT20_IIC_Send_Byte(SHT2x_WRITE_REG);
+	ret = SHT20_IIC_Wait_Ack();
+	if (ret)
+	{
+		return 0;
+	}
+	SHT20_IIC_Send_Byte(val);
+	ret = SHT20_IIC_Wait_Ack();
+	if (ret)
+	{
+		return 0;
+	}
+	SHT20_IIC_Stop();
+	return 1;
 }
 
 //产生IIC起始信号

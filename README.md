@@ -13,6 +13,12 @@ Sensor as follow:
     * water temperature
     * water pressure
     * water depth
+* Sonar
+    * water height
+    * confidence
+    * Integration Depth
+
+* Miscellaneous IMU
 
 # ROV传感器集成板
 

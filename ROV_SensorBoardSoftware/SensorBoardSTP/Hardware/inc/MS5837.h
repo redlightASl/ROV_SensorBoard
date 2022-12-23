@@ -1,6 +1,7 @@
 #ifndef __MS5837_H
 #define __MS5837_H
 #include <stdint.h>
+#include "MultiTimer.h"
 
 //model
 #define MS5837_30BA 0x00
@@ -31,6 +32,14 @@
 #define FRESH_WATER_DENSITY 997
 #define SEA_WATER_DENSITY 1029
 
+#define STD_ATMOS_PRESSURE 101325
+#define TEST_UNDERWATER_PRESSURE 105040
+
+//states
+#define MS5837_STATE_CONVERT_D1 1
+#define MS5837_STATE_CONVERT_D2 2
+#define MS5837_STATE_CALCULATE 3
+
 static const float Pa = 100.0f;
 static const float Bar = 0.001f;
 static const float mBar = 1.0f;
@@ -43,12 +52,13 @@ struct MS5837_Attribute
 	float fluidDensity; //Fluid density (Default:SEA_WATER_DENSITY)
 	float tempertureUnit; //Temperature unit (Default:C)
 	float pressureUnit; //Pressure unit (Default:mBar)
+	float reference_pressure; //zero-depth Pressure (Default:STP)
 };
 typedef struct MS5837_Attribute MS5837_Attribute_t;
 
 struct MS5837_OriginData
 {
-    int32_t OriginTemperature;
+	int32_t OriginTemperature;
 	int32_t OriginPressure;
 	uint16_t SensorOriginData[8];
 	uint32_t D1;
@@ -58,37 +68,39 @@ typedef struct MS5837_OriginData MS5837_OriginData_t;
 
 struct MS5837_Data
 {
-    float temperture;
-    float pressure;
+	float temperture;
+	float pressure;
 };
 typedef struct MS5837_Data MS5837_Data_t;
 
 struct MS5837_FIR_Parameter
 {
-    float filter[10];
-    float sum;
-    uint8_t cnt;
+	float filter[10];
+	float sum;
+	uint8_t cnt;
 };
 typedef struct MS5837_FIR_Parameter MS5837_FIR_Parameter_t;
 
-
-
-
 struct TemperatureData
 {
-  uint8_t Temp_H;
-  uint8_t Temp_L;
+	uint8_t Temp_H;
+	uint8_t Temp_L;
 };
 typedef struct TemperatureData TemperatureData_t;
 
 struct DepthDate
 {
-  uint8_t Depth_H;
-  uint8_t Depth_L;
+	uint8_t Depth_H;
+	uint8_t Depth_L;
 };
 typedef struct DepthDate DepthDate_t;
 
-void MS5837_Init(void);
+extern volatile MultiTimer MS5837_recv_timer;
+
+void MS5837_GetDataTask_cb(MultiTimer* timer, void* userData);
+
+void MS5837_SetRefPressure(uint32_t reference_pressure);
+void MS5837_Init(int32_t default_density, int32_t model, int32_t pressure_unit, int32_t temperature_unit);
 void MS5837_getData(float* output_temperature, float* output_pressure);
 void MS5837_ReadDepth(float* output_depth);
 void MS5837_ReadDepth_filtered(float* output_depth);

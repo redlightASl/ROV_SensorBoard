@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_MD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Hardware\inc;..\Core;..\Main;..\STM32F10x_FWLib\inc</IncludePath>
+              <IncludePath>..\Hardware\inc;..\Core;..\Main;..\STM32F10x_FWLib\inc;..\Components\MultiTimer</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -457,6 +457,11 @@
               <FileName>sht20_iic.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Hardware\src\sht20_iic.c</FilePath>
+            </File>
+            <File>
+              <FileName>sonar.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\src\sonar.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -577,6 +582,16 @@
               <FileName>stm32f10x_wwdg.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\STM32F10x_FWLib\src\stm32f10x_wwdg.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Components</GroupName>
+          <Files>
+            <File>
+              <FileName>MultiTimer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Components\MultiTimer\MultiTimer.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "bno055_iic.h": "c",
-        "stdio.h": "c"
-    }
-}

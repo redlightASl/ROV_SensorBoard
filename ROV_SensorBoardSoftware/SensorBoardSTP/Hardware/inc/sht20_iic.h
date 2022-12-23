@@ -36,7 +36,6 @@ void SHT20_IIC_Init(void);
 u8 SHT20_SoftReset(void);
 u8 SHT20_ReadUserReg(void);
 u8 SHT20_SetResolution(SHT20_Resolution_t res);
-u16 SHT20_GetRaw(u8 cmd);
 
 void SHT20_IIC_Start(void);
 void SHT20_IIC_Stop(void);
