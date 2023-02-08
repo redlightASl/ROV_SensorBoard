@@ -13,12 +13,14 @@ Sensor as follow:
     * water temperature
     * water pressure
     * water depth
-* Sonar
+* Sonar GP30
     * water height
     * confidence
     * Integration Depth
 
 * Miscellaneous IMU
+    * Support SPI connection
+
 
 # ROV传感器集成板
 
@@ -32,8 +34,8 @@ Sensor as follow:
 | GND        | 数字地                     |
 | WD_UART_TX | 主串口TX                   |
 | WD_UART_RX | 主串口RX                   |
-| UART2_TX   | 从机串口TX                 |
-| UART2_RX   | 从机串口RX                 |
+| UART2_TX   | 从机串口TX，可连接声呐     |
+| UART2_RX   | 从机串口RX，可连接声呐     |
 | Ctrl       | NRST复位控制               |
 | GPIO_PA0   | IO接口，可用于PWM输出或ADC |
 | Q          | IO接口，可用于PWM输出      |
@@ -54,3 +56,8 @@ Sensor as follow:
 
 另有一排标准JTAG接口
 
+### 高度-深度混合纠错
+
+在接近水面情况下使用高度信息推算当前深度
+
+在坐底情况下使用深度信息推算当前高度

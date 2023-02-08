@@ -1,7 +1,7 @@
-#include "MS5837.h"
-#include "myiic.h"
-#include "delay.h"
 #include <stdio.h>
+#include "delay.h"
+#include "myiic.h"
+#include "MS5837.h"
 #include "MultiTimer.h"
 
 static MS5837_Attribute_t ms5832_attribute;
@@ -9,10 +9,11 @@ static MS5837_OriginData_t ms5837_origin_data;
 static MS5837_Data_t ms5837_data;
 static MS5837_FIR_Parameter_t ms5837_fir;
 
-volatile MultiTimer MS5837_recv_timer;
-u8 MS5837_STATE = MS5837_STATE_CONVERT_D1;
+// volatile MultiTimer MS5837_recv_timer;
+MultiTimer MS5837_recv_timer;
+uint8_t MS5837_STATE = MS5837_STATE_CONVERT_D1;
 
-static void MS5837_WriteByte(u8 WriteCmd)
+static void MS5837_WriteByte(uint8_t WriteCmd)
 {
 	IIC_Start();
 	IIC_Send_Byte((MS5837_ADDR << 1) | 0);
@@ -58,6 +59,11 @@ static inline void MS5837_SetUnit(float pressure_unit, float temperature_unit)
 {
 	ms5832_attribute.pressureUnit = pressure_unit;
 	ms5832_attribute.tempertureUnit = temperature_unit;
+}
+
+static inline void MS5837_SetRefPressure(float reference_pressure)
+{
+	ms5832_attribute.reference_pressure = reference_pressure;
 }
 
 static inline void MS5837_Reset(void)
@@ -115,7 +121,7 @@ static uint8_t MS5837_Check(void)
 	uint8_t crcRead = 0;
 	uint8_t crcCalculated = 0;
 
-	MS5837_Reset(); //¸´Î»
+	MS5837_Reset();
 	delay_ms(20);
 
 	for (i = 0; i < 7; i++)
@@ -149,21 +155,6 @@ static uint8_t MS5837_Check(void)
 	{
 		return 0; /* fail */
 	}
-}
-
-static void MS5837_Convert(void)
-{
-	MS5837_WriteByte(MS5837_CONVERT_D1_8192);
-	delay_ms(20);
-	ms5837_origin_data.D1 = MS5837_Read4Byte(MS5837_ADC_READ);
-	ms5837_origin_data.D1 >>= 8;
-
-	//    delay_ms(20);
-
-	MS5837_WriteByte(MS5837_CONVERT_D2_8192);
-	delay_ms(20);
-	ms5837_origin_data.D2 = MS5837_Read4Byte(MS5837_ADC_READ);
-	ms5837_origin_data.D2 >>= 8;
 }
 
 static void MS5837_Calculate(void)
@@ -241,17 +232,17 @@ static void MS5837_Calculate(void)
 	ms5837_data.pressure = ms5837_origin_data.OriginPressure / 10.0f * ms5832_attribute.pressureUnit;
 }
 
-void MS5837_SetRefPressure(uint32_t reference_pressure)
+static float MS5837_ConvertDepth(void)
 {
-	ms5832_attribute.reference_pressure = (float)reference_pressure;
+	return ((ms5837_data.pressure * 100.0f - ms5832_attribute.reference_pressure) / (ms5832_attribute.fluidDensity * 9.80665));
 }
 
-void MS5837_Init(int32_t default_density, int32_t model, int32_t pressure_unit, int32_t temperature_unit)
+void MS5837_Init(int32_t default_density, uint8_t model, int32_t pressure_unit, int32_t temperature_unit, int32_t reference_pressure)
 {
-	MS5837_SetFluidDensity(default_density);
+	MS5837_SetFluidDensity((float)default_density);
 	MS5837_SetModel(model);
-	MS5837_SetUnit(pressure_unit, temperature_unit);
-	MS5837_SetRefPressure(STD_ATMOS_PRESSURE);
+	MS5837_SetUnit((float)pressure_unit, (float)temperature_unit);
+	MS5837_SetRefPressure((float)reference_pressure);
 
 	while (!MS5837_Check())
 	{
@@ -261,6 +252,21 @@ void MS5837_Init(int32_t default_density, int32_t model, int32_t pressure_unit, 
 
 	printf("MS5837 Init Successful\r\n");
 }
+
+// static void MS5837_Convert(void)
+// {
+// 	MS5837_WriteByte(MS5837_CONVERT_D1_8192);
+// 	delay_ms(20);
+// 	ms5837_origin_data.D1 = MS5837_Read4Byte(MS5837_ADC_READ);
+// 	ms5837_origin_data.D1 >>= 8;
+
+// 	//    delay_ms(20);
+
+// 	MS5837_WriteByte(MS5837_CONVERT_D2_8192);
+// 	delay_ms(20);
+// 	ms5837_origin_data.D2 = MS5837_Read4Byte(MS5837_ADC_READ);
+// 	ms5837_origin_data.D2 >>= 8;
+// }
 
 // void MS5837_getData(float* output_temperature, float* output_pressure)
 // {
@@ -310,29 +316,38 @@ void MS5837_GetDataTask_cb(MultiTimer* timer, void* userData)
 	MultiTimerRestart(timer, (uint32_t)(userData));
 }
 
-void MS5837_getData(float* output_temperature, float* output_pressure)
+// void MS5837_GetData(float* output_temperature, float* output_pressure)
+// {
+// 	*output_temperature = ms5837_data.temperture;
+// 	*output_pressure = ms5837_data.pressure;
+// }
+// water_data
+
+void MS5837_GetData(MS5837_Data_t* output_data)
 {
-	*output_temperature = ms5837_data.temperture;
-	*output_pressure = ms5837_data.pressure;
+	output_data->temperture = ms5837_data.temperture;
+	output_data->pressure = ms5837_data.pressure;
 }
 
-void MS5837_ReadDepth(float* output_depth)
-{
-	*output_depth = (ms5837_data.pressure * 100.0f - ms5832_attribute.reference_pressure) / (ms5832_attribute.fluidDensity * 9.80665);
-}
-
-void MS5837_ReadDepth_filtered(float* output_depth)
+void MS5837_ReadDepth(uint8_t is_filtered, float* output_depth)
 {
 	float w_depth;
 	float temp;
 
-	MS5837_ReadDepth(&w_depth);
+	w_depth = MS5837_ConvertDepth();
 
-	temp = ms5837_fir.filter[ms5837_fir.cnt];
-	ms5837_fir.filter[ms5837_fir.cnt] = w_depth;
-	ms5837_fir.sum += ms5837_fir.filter[ms5837_fir.cnt] - temp;
-	*output_depth = ms5837_fir.sum / 10.0f;
-	ms5837_fir.cnt++;
+	if (is_filtered)
+	{
+		temp = ms5837_fir.filter[ms5837_fir.cnt];
+		ms5837_fir.filter[ms5837_fir.cnt] = w_depth;
+		ms5837_fir.sum += ms5837_fir.filter[ms5837_fir.cnt] - temp;
+		*output_depth = ms5837_fir.sum / 10.0f;
+		ms5837_fir.cnt++;
+	}
+	else //not filtered
+	{
+		*output_depth = w_depth;
+	}
 
 	if (ms5837_fir.cnt == 10)
 	{

@@ -1,6 +1,7 @@
 #ifndef __MS5837_H
 #define __MS5837_H
 #include <stdint.h>
+#include "sys.h"
 #include "MultiTimer.h"
 
 //model
@@ -81,28 +82,14 @@ struct MS5837_FIR_Parameter
 };
 typedef struct MS5837_FIR_Parameter MS5837_FIR_Parameter_t;
 
-struct TemperatureData
-{
-	uint8_t Temp_H;
-	uint8_t Temp_L;
-};
-typedef struct TemperatureData TemperatureData_t;
 
-struct DepthDate
-{
-	uint8_t Depth_H;
-	uint8_t Depth_L;
-};
-typedef struct DepthDate DepthDate_t;
-
-extern volatile MultiTimer MS5837_recv_timer;
+// extern volatile MultiTimer MS5837_recv_timer;
+extern MultiTimer MS5837_recv_timer;
 
 void MS5837_GetDataTask_cb(MultiTimer* timer, void* userData);
 
-void MS5837_SetRefPressure(uint32_t reference_pressure);
-void MS5837_Init(int32_t default_density, int32_t model, int32_t pressure_unit, int32_t temperature_unit);
-void MS5837_getData(float* output_temperature, float* output_pressure);
-void MS5837_ReadDepth(float* output_depth);
-void MS5837_ReadDepth_filtered(float* output_depth);
+void MS5837_Init(int32_t default_density, uint8_t model, int32_t pressure_unit, int32_t temperature_uni, int32_t reference_pressure);
+void MS5837_GetData(MS5837_Data_t* output_data);
+void MS5837_ReadDepth(uint8_t is_filtered, float* output_depth);
 
 #endif
